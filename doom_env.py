@@ -5,7 +5,7 @@ from vizdoom import gymnasium_wrapper
 from wrappers import apply_preprocessing
 
 
-class DoomEnv:
+class DoomEnv(gym.Env):
     """
     A wrapper for ViZDoom environments with preprocessing and action mapping.
 
@@ -35,8 +35,12 @@ class DoomEnv:
         frame_stack=4,
     ):
         render_mode = "human" if render else None
-        self.env = gym.make(env_id, render_mode=render_mode)
-
+        self.env = gym.make(
+            env_id,
+            render_mode=render_mode,
+            max_buttons_pressed=0,
+            use_multi_binary_action_space=True,
+        )
         # Action space: either a custom Discrete mapping or the env's native space.
         self.discrete_actions = discrete_actions
         self.action_names = action_names  # optional index → name dict for inspection

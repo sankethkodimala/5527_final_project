@@ -80,3 +80,21 @@ model = PPO(
     clip_range=0.2,
 )
 ```
+
+## CNN + PPO Pipeline
+
+The reusable CNN/PPO wiring now lives in [cnn.py](cnn.py). It builds the wrapped
+ViZDoom environment, a custom CNN feature extractor, and a PPO model without
+starting training.
+
+Example:
+
+```python
+from cnn import build_pipeline
+
+model, env = build_pipeline()
+print(env.observation_space)
+print(model.policy)
+```
+
+If you want to train later, call `model.learn(...)` in your own script.

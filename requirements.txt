@@ -11,6 +11,8 @@ opencv-python==4.13.0.92
 packaging==26.0
 pillow==12.2.0
 pygame-ce==2.5.7
+stable-baselines3
+torch
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
 six==1.17.0
