@@ -127,9 +127,10 @@ def evaluate(model, episodes=3):
     env.close()
 
 def train_model(model):
-    for i in range(5):
+    epochs = 10
+    for i in range(10):
         model.learn(total_timesteps=100000, reset_num_timesteps=False)
-        print(f"Completed training iteration {i+1}/5")
+        print(f"Completed training iteration {i+1}/10")
         evaluate(model, episodes=1)  # quick check after each iteration
     model.save("ppo_vizdoom_model")
 
