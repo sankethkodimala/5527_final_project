@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from doom_env import DoomEnv
+from doom_env_cooridor import DoomEnv
 
 def verify():
     # 1. init environment with preprocessing

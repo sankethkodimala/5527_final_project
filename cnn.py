@@ -6,7 +6,7 @@ import gymnasium as gym
 import matplotlib.pyplot as plt
 
 from actions import BASIC_DISCRETE_ACTIONS
-from doom_env import DoomEnv
+from doom_env_cooridor import DoomEnv
 
 
 def load_ml_dependencies():
@@ -69,7 +69,7 @@ def make_doom_cnn_class(BaseFeaturesExtractor, nn, torch):
 
 def make_doom_env(render=False):
     return DoomEnv(
-        env_id="VizdoomBasic-v1",
+        env_id="VizdoomDeadlyCorridor-MultiBinary-v1",    
         render=render,
         discrete_actions=BASIC_DISCRETE_ACTIONS,
         preprocess=True,

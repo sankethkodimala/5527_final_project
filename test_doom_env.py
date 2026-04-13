@@ -1,4 +1,4 @@
-from doom_env import DoomEnv
+from doom_env_cooridor import DoomEnv
 
 env = DoomEnv(env_id="VizdoomBasic-v1", render=True, discrete_actions=None)
 
