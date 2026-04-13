@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib
 import gymnasium as gym
 
+import matplotlib.pyplot as plt
+
 from actions import BASIC_DISCRETE_ACTIONS
 from doom_env import DoomEnv
 
@@ -108,7 +110,8 @@ def build_model():
     return model, env
 
 def evaluate(model, episodes=3):
-    env = make_doom_env(render=True)  # IMPORTANT: render=True
+    env = make_doom_env(render=True)
+    rewards = []
 
     for ep in range(episodes):
         obs, info = env.reset()
@@ -116,23 +119,40 @@ def evaluate(model, episodes=3):
         total_reward = 0
 
         while not done:
-            action, _ = model.predict(obs, deterministic=True)  # no randomness
+            action, _ = model.predict(obs, deterministic=True)
             obs, reward, terminated, truncated, info = env.step(action)
 
             done = terminated or truncated
             total_reward += reward
 
         print(f"Episode {ep} reward: {total_reward}")
+        rewards.append(total_reward)
 
     env.close()
+    return rewards
 
 def train_model(model):
-    epochs = 10
+    eval_rewards = []
+    checkpoints = []
+
     for i in range(10):
         model.learn(total_timesteps=100000, reset_num_timesteps=False)
         print(f"Completed training iteration {i+1}/10")
-        evaluate(model, episodes=1)  # quick check after each iteration
+
+        rewards = evaluate(model, episodes=1)
+        eval_rewards.append(rewards[0])
+        checkpoints.append((i + 1) * 100000)
+
     model.save("ppo_vizdoom_model")
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(checkpoints, eval_rewards, marker="o")
+    plt.xlabel("Training Timesteps")
+    plt.ylabel("Evaluation Reward")
+    plt.title("PPO ViZDoom Evaluation Reward")
+    plt.grid(True)
+    plt.savefig("vizdoom_eval_reward.png")
+    plt.show()
 
 
 if __name__ == "__main__":

@@ -98,3 +98,6 @@ print(model.policy)
 ```
 
 If you want to train later, call `model.learn(...)` in your own script.
+
+## Training
+To run training, do this:
