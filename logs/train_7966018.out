@@ -1,0 +1,10 @@
+Job ID:   7966018
+Node:     cn2103
+GPU:      Tesla V100-PCIE-32GB
+Start:    Wed Apr 29 12:10:49 CDT 2026
+Using cuda device
+Starting training for 1,000,000 timesteps
+Observation space: Box(0.0, 1.0, (4, 84, 84), float32)
+Action space:      Discrete(6)
+Logging to ./tensorboard_logs/ppo_vizdoom_1
+End: Wed Apr 29 12:12:09 CDT 2026

@@ -1,0 +1,52 @@
+/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/cuda/__init__.py:371: UserWarning: Found GPU0 Tesla V100-PCIE-32GB which is of compute capability (CC) 7.0.
+The following list shows the CCs this version of PyTorch was built for and the hardware CCs it supports:
+- 7.5 which supports hardware CC >=7.5,<8.0
+- 8.0 which supports hardware CC >=8.0,<9.0 except {8.7}
+- 8.6 which supports hardware CC >=8.6,<9.0 except {8.7}
+- 9.0 which supports hardware CC >=9.0,<10.0
+- 10.0 which supports hardware CC >=10.0,<11.0 except {10.1}
+- 12.0 which supports hardware CC >=12.0,<13.0
+Please follow the instructions at https://pytorch.org/get-started/locally/ to install a PyTorch release that supports one of these CUDA versions: 12.6, 12.8
+  _warn_unsupported_code(d, device_cc, code_ccs)
+Traceback (most recent call last):
+  File "/projects/standard/csci5527/shared/VizDoom/5527_final_project/train.py", line 87, in <module>
+    train(args.timesteps, args.checkpoint_freq, args.seed)
+  File "/projects/standard/csci5527/shared/VizDoom/5527_final_project/train.py", line 64, in train
+    model.learn(
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/stable_baselines3/ppo/ppo.py", line 311, in learn
+    return super().learn(
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/stable_baselines3/common/on_policy_algorithm.py", line 324, in learn
+    continue_training = self.collect_rollouts(self.env, callback, self.rollout_buffer, n_rollout_steps=self.n_steps)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/stable_baselines3/common/on_policy_algorithm.py", line 202, in collect_rollouts
+    actions, values, log_probs = self.policy(obs_tensor)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/stable_baselines3/common/policies.py", line 645, in forward
+    features = self.extract_features(obs)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/stable_baselines3/common/policies.py", line 672, in extract_features
+    return super().extract_features(obs, self.features_extractor if features_extractor is None else features_extractor)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/stable_baselines3/common/policies.py", line 131, in extract_features
+    return features_extractor(preprocessed_obs)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/projects/standard/csci5527/shared/VizDoom/5527_final_project/cnn.py", line 65, in forward
+    return self.linear(self.cnn(observations))
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/container.py", line 253, in forward
+    input = module(input)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1779, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1790, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/conv.py", line 553, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+  File "/users/8/nadim016/.conda/envs/vizdoom-env/lib/python3.10/site-packages/torch/nn/modules/conv.py", line 548, in _conv_forward
+    return F.conv2d(
+RuntimeError: GET was unable to find an engine to execute this computation
