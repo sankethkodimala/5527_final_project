@@ -10,3 +10,7 @@ __pycache__/
 
 *.ini
 preprocessed_preview.png
+
+# Models and Logs
+*.zip
+tensorboard_logs/
