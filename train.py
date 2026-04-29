@@ -6,7 +6,7 @@ from stable_baselines3.common.utils import set_random_seed
 from basic.actions import BASIC_DISCRETE_ACTIONS
 from basic.doom_env import DoomEnv
 from corridor.actions import CORRIDOR_DISCRETE_ACTIONS
-from corridor.doom_env import CorridorDoomEnv
+from corridor.doom_env_corridor import CorridorDoomEnv
 
 import pipeline
 
