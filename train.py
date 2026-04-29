@@ -1,33 +1,43 @@
+import argparse
 import os
-import torch
-from stable_baselines3 import PPO
+
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 from stable_baselines3.common.utils import set_random_seed
 
-from cnn import make_doom_cnn_class, make_vec_env, load_ml_dependencies
+from cnn import load_ml_dependencies, make_doom_cnn_class, make_doom_env, make_vec_env
 
-def train():
-    # Set random seed
-    seed = 5527
+
+def train(total_timesteps=1_000_000, checkpoint_freq=100_000, seed=5527):
     set_random_seed(seed)
-    
-    # Define hyperparameters
-    learning_rate = 3e-4
-    n_steps = 1024
-    batch_size = 64
-    gamma = 0.99
-    gae_lambda = 0.95
-    clip_range = 0.2
-    total_timesteps = 2048 # A short run to test training loop works
-    
-    # Load dependencies and build the custom CNN class
+
     torch_pkg, nn, PPO_cls, BaseFeaturesExtractor, _, _ = load_ml_dependencies()
     DoomCNN = make_doom_cnn_class(BaseFeaturesExtractor, nn, torch_pkg)
-    
-    # env initialization
+
     env = make_vec_env()
-    env.seed(seed)
-    
-    # Setup PPO model with Tensorboard logging
+    eval_env = make_vec_env()
+
+    os.makedirs("checkpoints/best", exist_ok=True)
+    os.makedirs("tensorboard_logs", exist_ok=True)
+
+    callbacks = [
+        CheckpointCallback(
+            save_freq=checkpoint_freq,
+            save_path="./checkpoints/",
+            name_prefix="ppo_vizdoom",
+            verbose=1,
+        ),
+        EvalCallback(
+            eval_env,
+            best_model_save_path="./checkpoints/best/",
+            log_path="./checkpoints/",
+            eval_freq=checkpoint_freq,
+            n_eval_episodes=5,
+            deterministic=True,
+            render=False,
+            verbose=1,
+        ),
+    ]
+
     model = PPO_cls(
         "CnnPolicy",
         env,
@@ -36,25 +46,42 @@ def train():
             "features_extractor_kwargs": {"features_dim": 256},
             "normalize_images": False,
         },
-        learning_rate=learning_rate,
-        n_steps=n_steps,
-        batch_size=batch_size,
-        gamma=gamma,
-        gae_lambda=gae_lambda,
-        clip_range=clip_range,
-        tensorboard_log="./tensorboard_logs/", # TO VIEW: tensorboard --logdir ./tensorboard_logs/
+        learning_rate=3e-4,
+        n_steps=1024,
+        batch_size=64,
+        gamma=0.99,
+        gae_lambda=0.95,
+        clip_range=0.2,
+        tensorboard_log="./tensorboard_logs/",
         verbose=1,
-        seed=seed
+        seed=seed,
     )
-    
-    print("Starting training")
-    # Train model
-    model.learn(total_timesteps=total_timesteps, tb_log_name="ppo_vizdoom", reset_num_timesteps=False)
-    
-    print("Training finished.")
+
+    print(f"Starting training for {total_timesteps:,} timesteps")
+    print(f"Observation space: {env.observation_space}")
+    print(f"Action space:      {env.action_space}")
+
+    model.learn(
+        total_timesteps=total_timesteps,
+        callback=callbacks,
+        tb_log_name="ppo_vizdoom",
+        reset_num_timesteps=True,
+    )
+
+    print("Training finished. Saving final model.")
     model.save("ppo_vizdoom_baseline")
-    
+
     env.close()
+    eval_env.close()
+
 
 if __name__ == "__main__":
-    train()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--timesteps", type=int, default=1_000_000,
+                        help="Total environment steps to train for (default: 1M)")
+    parser.add_argument("--checkpoint-freq", type=int, default=100_000,
+                        help="Save a checkpoint every N steps (default: 100k)")
+    parser.add_argument("--seed", type=int, default=5527)
+    args = parser.parse_args()
+
+    train(args.timesteps, args.checkpoint_freq, args.seed)

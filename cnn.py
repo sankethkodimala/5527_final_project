@@ -109,8 +109,8 @@ def build_model():
 
     return model, env
 
-def evaluate(model, episodes=3):
-    env = make_doom_env(render=True)
+def evaluate(model, episodes=3, render=False):
+    env = make_doom_env(render=render)
     rewards = []
 
     for ep in range(episodes):
