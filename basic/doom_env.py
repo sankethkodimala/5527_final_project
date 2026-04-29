@@ -2,6 +2,8 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from vizdoom import gymnasium_wrapper
+import sys
+sys.path.append(".")
 from wrappers import apply_preprocessing
 
 
