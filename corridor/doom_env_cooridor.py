@@ -7,7 +7,7 @@ sys.path.append(".")
 from wrappers import apply_preprocessing
 
 
-class DoomEnv(gym.Env):
+class CorridorDoomEnv(gym.Env):
     """
     A wrapper for ViZDoom environments with preprocessing, discrete action
     mapping, and light reward shaping.

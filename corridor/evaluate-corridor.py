@@ -1,7 +1,7 @@
 import importlib
 from vizdoom import gymnasium_wrapper
 
-from actions import BASIC_DISCRETE_ACTIONS, ACTION_NAMES
+from actions import CORRIDOR_DISCRETE_ACTIONS, CORRIDOR_ACTION_NAMES
 from doom_env_cooridor import DoomEnv
 
 
@@ -18,7 +18,7 @@ def make_doom_env(render=True):
     return DoomEnv(
         env_id=ENV_ID,
         render=render,
-        discrete_actions=BASIC_DISCRETE_ACTIONS,
+        discrete_actions=CORRIDOR_DISCRETE_ACTIONS,
         preprocess=True,
         resize_shape=(84, 84),
         grayscale=True,
@@ -47,8 +47,8 @@ def evaluate(model_path=MODEL_PATH, episodes=3, render=True, deterministic=True)
                 done = terminated or truncated
                 total_reward += reward
 
-                action_name = ACTION_NAMES.get(action_idx, f"action_{action_idx}")
-                mapped = BASIC_DISCRETE_ACTIONS[action_idx]
+                action_name = CORRIDOR_ACTION_NAMES.get(action_idx, f"action_{action_idx}")
+                mapped = CORRIDOR_DISCRETE_ACTIONS[action_idx]
 
                 print(
                     f"episode={ep + 1} "

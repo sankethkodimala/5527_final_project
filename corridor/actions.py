@@ -3,7 +3,7 @@ from typing import Dict, List
 # Actual button order reported by the environment:
 # [MOVE_LEFT, MOVE_RIGHT, ATTACK, MOVE_FORWARD, MOVE_BACKWARD, TURN_LEFT, TURN_RIGHT]
 
-BASIC_DISCRETE_ACTIONS: List[List[int]] = [
+CORRIDOR_DISCRETE_ACTIONS: List[List[int]] = [
     [0, 0, 0, 0, 0, 0, 0],  # 0: no_op
 
     [0, 0, 0, 1, 0, 0, 0],  # 1: forward
@@ -28,7 +28,7 @@ BASIC_DISCRETE_ACTIONS: List[List[int]] = [
     [0, 0, 1, 1, 0, 0, 1],  # 14: forward_turn_right_shoot
 ]
 
-ACTION_NAMES: Dict[int, str] = {
+CORRIDOR_ACTION_NAMES: Dict[int, str] = {
     0: "no_op",
     1: "forward",
     2: "backward",
@@ -46,13 +46,13 @@ ACTION_NAMES: Dict[int, str] = {
     14: "forward_turn_right_shoot",
 }
 
-N_ACTIONS: int = len(BASIC_DISCRETE_ACTIONS)
+N_ACTIONS: int = len(CORRIDOR_DISCRETE_ACTIONS)
 
 
 def get_action_name(action_idx: int) -> str:
-    if action_idx not in ACTION_NAMES:
+    if action_idx not in CORRIDOR_ACTION_NAMES:
         raise ValueError(
             f"Invalid action index {action_idx}. "
             f"Valid range: 0–{N_ACTIONS - 1}."
         )
-    return ACTION_NAMES[action_idx]
+    return CORRIDOR_ACTION_NAMES[action_idx]
