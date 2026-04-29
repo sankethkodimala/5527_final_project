@@ -10,7 +10,7 @@ class ScreenOnlyObservation(gym.ObservationWrapper):
         if "screen" not in env.observation_space.spaces:
             raise KeyError("Observation space does not contain 'screen'")
         self.observation_space = env.observation_space.spaces["screen"]
-
+    
     def observation(self, observation):
         return observation["screen"]
 

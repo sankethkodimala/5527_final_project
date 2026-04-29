@@ -9,7 +9,8 @@ from basic.actions import BASIC_DISCRETE_ACTIONS
 from corridor.doom_env_cooridor import DoomEnv
 
 
-def load_ml_dependencies():
+
+def load_ml_dependencies(input_doom_env):
     torch = importlib.import_module("torch")
     sb3 = importlib.import_module("stable_baselines3")
     torch_layers = importlib.import_module("stable_baselines3.common.torch_layers")
@@ -67,9 +68,9 @@ def make_doom_cnn_class(BaseFeaturesExtractor, nn, torch):
     return DoomCNN
 
 
-def make_doom_env(render=False):
+def make_doom_env(doom_env_id, render=False):
     return DoomEnv(
-        env_id="VizdoomDeadlyCorridor-MultiBinary-v1",    
+        env_id=doom_env_id,
         render=render,
         discrete_actions=BASIC_DISCRETE_ACTIONS,
         preprocess=True,
@@ -79,16 +80,16 @@ def make_doom_env(render=False):
     )
 
 
-def make_vec_env():
+def make_vec_env(doom_env_id):
     _, _, _, _, DummyVecEnv, VecMonitor = load_ml_dependencies()
 
-    return VecMonitor(DummyVecEnv([make_doom_env]))
+    return VecMonitor(DummyVecEnv([lambda: make_doom_env(doom_env_id)]))
 
 
-def build_model():
+def build_model(doom_env_id):
     torch, nn, PPO, BaseFeaturesExtractor, _, _ = load_ml_dependencies()
     DoomCNN = make_doom_cnn_class(BaseFeaturesExtractor, nn, torch)
-    env = make_vec_env()
+    env = make_vec_env(doom_env_id)
 
     model = PPO(
         "CnnPolicy",
@@ -108,59 +109,3 @@ def build_model():
     )
 
     return model, env
-
-def evaluate(model, episodes=3):
-    env = make_doom_env(render=True)
-    rewards = []
-
-    for ep in range(episodes):
-        obs, info = env.reset()
-        done = False
-        total_reward = 0
-
-        while not done:
-            action, _ = model.predict(obs, deterministic=True)
-            obs, reward, terminated, truncated, info = env.step(action)
-
-            done = terminated or truncated
-            total_reward += reward
-
-        print(f"Episode {ep} reward: {total_reward}")
-        rewards.append(total_reward)
-
-    env.close()
-    return rewards
-
-def train_model(model):
-    eval_rewards = []
-    checkpoints = []
-
-    for i in range(10):
-        model.learn(total_timesteps=100000, reset_num_timesteps=False)
-        print(f"Completed training iteration {i+1}/10")
-
-        rewards = evaluate(model, episodes=1)
-        eval_rewards.append(rewards[0])
-        checkpoints.append((i + 1) * 100000)
-
-    model.save("ppo_vizdoom_model")
-
-    plt.figure(figsize=(8, 5))
-    plt.plot(checkpoints, eval_rewards, marker="o")
-    plt.xlabel("Training Timesteps")
-    plt.ylabel("Evaluation Reward")
-    plt.title("PPO ViZDoom Evaluation Reward")
-    plt.grid(True)
-    plt.savefig("vizdoom_eval_reward.png")
-    plt.show()
-
-
-if __name__ == "__main__":
-    model, env = build_model()
-    print("CNN + PPO pipeline created successfully.")
-    print(f"Observation space: {env.observation_space}")
-    print(f"Action space: {env.action_space}")
-    print(model.policy)
-
-    train_model(model)
-    evaluate(model)

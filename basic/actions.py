@@ -1,49 +1,29 @@
+"""
+VizdoomBasic-MultiBinary-v1 exposes a 3-button MultiBinary action space with
+button order: [MOVE_LEFT, MOVE_RIGHT, ATTACK].
+"""
+
 from typing import Dict, List
 
-# Actual button order reported by the environment:
-# [MOVE_LEFT, MOVE_RIGHT, ATTACK, MOVE_FORWARD, MOVE_BACKWARD, TURN_LEFT, TURN_RIGHT]
-
+# Button order in VizdoomBasic MultiBinary: [MOVE_LEFT, MOVE_RIGHT, ATTACK]
+# each inner list is a button vector - 1 = pressed, 0 = not pressed
+# idx 0 kept as no-op so the agent can "wait"
 BASIC_DISCRETE_ACTIONS: List[List[int]] = [
-    [0, 0, 0, 0, 0, 0, 0],  # 0: no_op
-
-    [0, 0, 0, 1, 0, 0, 0],  # 1: forward
-    [0, 0, 0, 0, 1, 0, 0],  # 2: backward
-
-    [1, 0, 0, 0, 0, 0, 0],  # 3: strafe_left
-    [0, 1, 0, 0, 0, 0, 0],  # 4: strafe_right
-
-    [0, 0, 0, 0, 0, 1, 0],  # 5: turn_left
-    [0, 0, 0, 0, 0, 0, 1],  # 6: turn_right
-
-    [0, 0, 1, 0, 0, 0, 0],  # 7: shoot
-
-    [0, 0, 1, 1, 0, 0, 0],  # 8: forward_shoot
-    [0, 0, 1, 0, 0, 1, 0],  # 9: turn_left_shoot
-    [0, 0, 1, 0, 0, 0, 1],  # 10: turn_right_shoot
-
-    [0, 0, 0, 1, 0, 1, 0],  # 11: forward_turn_left
-    [0, 0, 0, 1, 0, 0, 1],  # 12: forward_turn_right
-
-    [0, 0, 1, 1, 0, 1, 0],  # 13: forward_turn_left_shoot
-    [0, 0, 1, 1, 0, 0, 1],  # 14: forward_turn_right_shoot
+    [0, 0, 0],  # 0: no-op          — do nothing
+    [1, 0, 0],  # 1: move_left      — strafe left
+    [0, 1, 0],  # 2: move_right     — strafe right
+    [0, 0, 1],  # 3: shoot          — attack without moving
+    [1, 0, 1],  # 4: move_left_shoot  — strafe left while shooting
+    [0, 1, 1],  # 5: move_right_shoot — strafe right while shooting
 ]
 
 ACTION_NAMES: Dict[int, str] = {
     0: "no_op",
-    1: "forward",
-    2: "backward",
-    3: "strafe_left",
-    4: "strafe_right",
-    5: "turn_left",
-    6: "turn_right",
-    7: "shoot",
-    8: "forward_shoot",
-    9: "turn_left_shoot",
-    10: "turn_right_shoot",
-    11: "forward_turn_left",
-    12: "forward_turn_right",
-    13: "forward_turn_left_shoot",
-    14: "forward_turn_right_shoot",
+    1: "move_left",
+    2: "move_right",
+    3: "shoot",
+    4: "move_left_shoot",
+    5: "move_right_shoot",
 }
 
 N_ACTIONS: int = len(BASIC_DISCRETE_ACTIONS)
