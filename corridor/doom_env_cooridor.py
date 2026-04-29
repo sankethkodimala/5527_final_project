@@ -1,6 +1,9 @@
+import sys
+
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
+sys.path.append(".")
 from wrappers import apply_preprocessing
 
 

@@ -1,11 +1,11 @@
 import importlib
 from vizdoom import gymnasium_wrapper
 
-from basic.actions import BASIC_DISCRETE_ACTIONS, ACTION_NAMES
-from corridor.doom_env_cooridor import DoomEnv
+from actions import BASIC_DISCRETE_ACTIONS, ACTION_NAMES
+from doom_env_cooridor import DoomEnv
 
 
-MODEL_PATH = "ppo_vizdoom_model_5.zip"
+MODEL_PATH = "corridor/ppo_vizdoom_model_5.zip"
 ENV_ID = "VizdoomDeadlyCorridor-v1"
 
 
