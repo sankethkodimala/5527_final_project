@@ -9,8 +9,8 @@ Validates that:
 import sys
 import numpy as np
 
-from doom_env import DoomEnv
-from actions import BASIC_DISCRETE_ACTIONS, ACTION_NAMES, N_ACTIONS, get_action_name
+from corridor.doom_env_cooridor import DoomEnv
+from basic.actions import BASIC_DISCRETE_ACTIONS, ACTION_NAMES, N_ACTIONS, get_action_name
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
