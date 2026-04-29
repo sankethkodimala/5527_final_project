@@ -3,18 +3,23 @@ import os
 
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 from stable_baselines3.common.utils import set_random_seed
+from basic.actions import BASIC_DISCRETE_ACTIONS
+from basic.doom_env import DoomEnv
 
-from cnn import load_ml_dependencies, make_doom_cnn_class, make_doom_env, make_vec_env
-
+import pipeline
 
 def train(total_timesteps=1_000_000, checkpoint_freq=100_000, seed=5527):
     set_random_seed(seed)
 
-    torch_pkg, nn, PPO_cls, BaseFeaturesExtractor, _, _ = load_ml_dependencies()
-    DoomCNN = make_doom_cnn_class(BaseFeaturesExtractor, nn, torch_pkg)
+    ml_pipeline = pipeline.DoomMLPipeline("VizdoomBasic-v1", BASIC_DISCRETE_ACTIONS, DoomEnv)    
 
-    env = make_vec_env()
-    eval_env = make_vec_env()
+
+
+    torch_pkg, nn, PPO_cls, BaseFeaturesExtractor, _, _ = ml_pipeline.load_ml_dependencies()
+    DoomCNN = ml_pipeline.make_doom_cnn_class(BaseFeaturesExtractor, nn, torch_pkg)
+
+    env = ml_pipeline.make_doom_env(render=False)
+    eval_env = ml_pipeline.make_vec_env()
 
     os.makedirs("checkpoints/best", exist_ok=True)
     os.makedirs("tensorboard_logs", exist_ok=True)
