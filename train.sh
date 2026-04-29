@@ -26,6 +26,6 @@ echo "Node:     $SLURMD_NODENAME"
 echo "GPU:      $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 echo "Start:    $(date)"
 
-$PYTHON train.py --timesteps 1000000 --checkpoint-freq 100000 --seed 5527 --scenario-id VizdoomBasic-v1 environment-class DoomEnv
+$PYTHON train.py --timesteps 1000000 --checkpoint-freq 100000 --seed 5527 --scenario-id VizdoomDeadlyCorridor-v1 --environment-class CorridorDoomEnv
 
 echo "End: $(date)"

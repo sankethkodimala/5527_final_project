@@ -10,16 +10,18 @@ from corridor.doom_env_corridor import CorridorDoomEnv
 
 import pipeline
 
-def train(total_timesteps=1_000_000, checkpoint_freq=100_000, seed=5527, scenario_id="VizdoomBasic-v1", environment_class=DoomEnv):
+def train(total_timesteps=1_000_000, checkpoint_freq=100_000, seed=5527, scenario_id="VizdoomBasic-v1", environment_class="DoomEnv"):
     set_random_seed(seed)
 
-    if environment_class == CorridorDoomEnv:
+    if environment_class == "CorridorDoomEnv":
         scenario_id = "VizdoomDeadlyCorridor-v1"
         discrete_actions = CORRIDOR_DISCRETE_ACTIONS
+        environment_class = CorridorDoomEnv
 
-    if environment_class == DoomEnv:
+    if environment_class == "DoomEnv":
         scenario_id = "VizdoomBasic-v1"
         discrete_actions = BASIC_DISCRETE_ACTIONS
+        environment_class = DoomEnv
 
     ml_pipeline = pipeline.DoomMLPipeline(scenario_id, discrete_actions, environment_class)    
     
@@ -40,7 +42,7 @@ def train(total_timesteps=1_000_000, checkpoint_freq=100_000, seed=5527, scenari
         CheckpointCallback(
             save_freq=checkpoint_freq,
             save_path="./checkpoints/",
-            name_prefix="ppo_vizdoom",
+            name_prefix=f"ppo_vizdoom_{scenario_id}",
             verbose=1,
         ),
         EvalCallback(
@@ -87,4 +89,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    train(args.timesteps, args.checkpoint_freq, args.seed)
+    train(args.timesteps, args.checkpoint_freq, args.seed, args.scenario_id, args.environment_class)
