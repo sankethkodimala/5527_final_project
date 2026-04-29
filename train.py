@@ -18,8 +18,9 @@ def train(total_timesteps=1_000_000, checkpoint_freq=100_000, seed=5527):
     torch_pkg, nn, PPO_cls, BaseFeaturesExtractor, _, _ = ml_pipeline.load_ml_dependencies()
     DoomCNN = ml_pipeline.make_doom_cnn_class(BaseFeaturesExtractor, nn, torch_pkg)
 
-    env = ml_pipeline.make_doom_env(render=False)
+    model, env = ml_pipeline.build_model()
     eval_env = ml_pipeline.make_vec_env()
+
 
     os.makedirs("checkpoints/best", exist_ok=True)
     os.makedirs("tensorboard_logs", exist_ok=True)
@@ -42,25 +43,6 @@ def train(total_timesteps=1_000_000, checkpoint_freq=100_000, seed=5527):
             verbose=1,
         ),
     ]
-
-    model = PPO_cls(
-        "CnnPolicy",
-        env,
-        policy_kwargs={
-            "features_extractor_class": DoomCNN,
-            "features_extractor_kwargs": {"features_dim": 256},
-            "normalize_images": False,
-        },
-        learning_rate=3e-4,
-        n_steps=1024,
-        batch_size=64,
-        gamma=0.99,
-        gae_lambda=0.95,
-        clip_range=0.2,
-        tensorboard_log="./tensorboard_logs/",
-        verbose=1,
-        seed=seed,
-    )
 
     print(f"Starting training for {total_timesteps:,} timesteps")
     print(f"Observation space: {env.observation_space}")
