@@ -4,6 +4,7 @@ import importlib
 import gymnasium as gym
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from basic.actions import BASIC_DISCRETE_ACTIONS
 
@@ -15,14 +16,14 @@ class DoomMLPipeline:
 
     def load_ml_dependencies(self):
         torch = importlib.import_module("torch")
-        sb3 = importlib.import_module("stable_baselines3")
+        sb3 = importlib.import_module("sb3_contrib")
         torch_layers = importlib.import_module("stable_baselines3.common.torch_layers")
         vec_env = importlib.import_module("stable_baselines3.common.vec_env")
 
         return (
             torch,
             torch.nn,
-            sb3.PPO,
+            sb3.RecurrentPPO,
             torch_layers.BaseFeaturesExtractor,
             vec_env.DummyVecEnv,
             vec_env.VecMonitor,
@@ -90,17 +91,21 @@ class DoomMLPipeline:
 
 
     def build_model(self):
-        torch, nn, PPO, BaseFeaturesExtractor, _, _ = self.load_ml_dependencies()
+        torch, nn, RecurrentPPO, BaseFeaturesExtractor, _, _ = self.load_ml_dependencies()
         DoomCNN = self.make_doom_cnn_class(BaseFeaturesExtractor, nn, torch)
         env = self.make_vec_env()
 
-        model = PPO(
-            "CnnPolicy",
+        model = RecurrentPPO(
+            "CnnLstmPolicy",
             env,
             policy_kwargs={
                 "features_extractor_class": DoomCNN,
                 "features_extractor_kwargs": {"features_dim": 256},
                 "normalize_images": False,
+                "lstm_hidden_size": 256,
+                "n_lstm_layers": 1,
+                "shared_lstm": False,
+                "enable_critic_lstm": True,
             },
             learning_rate=3e-4,
             n_steps=1024,
