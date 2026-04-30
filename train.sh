@@ -4,8 +4,8 @@
 #SBATCH --partition=msigpu
 #SBATCH --gres=gpu:v100:1
 #SBATCH --time=04:00:00
-#SBATCH --output=logs/train_%j.out
-#SBATCH --error=logs/train_%j.err
+#SBATCH --output=defend_center_logs/train_%j.out
+#SBATCH --error=defend_center_logs/train_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=kodim003@umn.edu
 
