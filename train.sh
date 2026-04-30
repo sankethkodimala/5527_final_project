@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=vizdoom_ppo
+#SBATCH --job-name=vizdoom_defend_center_ppo
 #SBATCH -A csci5527
 #SBATCH --partition=msigpu
 #SBATCH --gres=gpu:v100:1
@@ -7,9 +7,9 @@
 #SBATCH --output=logs/train_%j.out
 #SBATCH --error=logs/train_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --mail-user=castl145@umn.edu
+#SBATCH --mail-user=kodim003@umn.edu
 
-PYTHON=/users/4/castl145/.conda/envs/5527-ppo-new/bin/python
+PYTHON=/users/9/kodim003/.conda/envs/5527-project/bin/python
 
 module load gcc/9.2.0
 module load cuda/11.2
@@ -26,6 +26,9 @@ echo "Node:     $SLURMD_NODENAME"
 echo "GPU:      $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 echo "Start:    $(date)"
 
-$PYTHON train.py --timesteps 1000000 --checkpoint-freq 100000 --seed 5527 --scenario-id VizdoomDeadlyCorridor-v1 --environment-class CorridorDoomEnv
+SCENARIO_ID=${SCENARIO_ID:-VizdoomDefendCenter-v1}
+ENVIRONMENT_CLASS=${ENVIRONMENT_CLASS:-DefendCenterDoomEnv}
+
+$PYTHON train.py --timesteps 1000000 --checkpoint-freq 100000 --seed 5527 --scenario-id "$SCENARIO_ID" --environment-class "$ENVIRONMENT_CLASS"
 
 echo "End: $(date)"

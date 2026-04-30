@@ -90,7 +90,7 @@ class DoomMLPipeline:
         return VecMonitor(DummyVecEnv([lambda: self.make_doom_env()]))
 
 
-    def build_model(self):
+    def build_model(self, seed=None, tensorboard_log="./tensorboard_logs/"):
         torch, nn, RecurrentPPO, BaseFeaturesExtractor, _, _ = self.load_ml_dependencies()
         DoomCNN = self.make_doom_cnn_class(BaseFeaturesExtractor, nn, torch)
         env = self.make_vec_env()
@@ -113,7 +113,9 @@ class DoomMLPipeline:
             gamma=0.99,
             gae_lambda=0.95,
             clip_range=0.2,
+            tensorboard_log=tensorboard_log,
             verbose=1,
+            seed=seed,
         )
 
         return model, env
