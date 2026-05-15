@@ -2,7 +2,6 @@
 .venv/
 venv/
 .env/
-.claude/
 
 # Logs
 logs/
@@ -11,6 +10,7 @@ my_logs/
 *.log
 *.out
 *.err
+*.pdf
 
 # Models, checkpoints, and TensorBoard
 checkpoints/
