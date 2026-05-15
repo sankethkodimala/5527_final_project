@@ -1,34 +1,24 @@
-from __future__ import annotations
-
 import importlib
-import gymnasium as gym
 
-import matplotlib.pyplot as plt
-import numpy as np
+from predict_position.actions import PREDICT_POSITION_DISCRETE_ACTIONS
+from predict_position.doom_env_position import PositionDoomEnv
 
-from basic.actions import BASIC_DISCRETE_ACTIONS
 
-class DoomMLPipeline:
-    def __init__(self, doom_env_id, action_space, environment_class):
+class PredictPositionDQNPipeline:
+    """
+    DQN pipeline for VizdoomPredictPosition-v1.
+
+    DQN is off-policy and uses a replay buffer, so this keeps a single
+    environment in DummyVecEnv.
+    """
+
+    def __init__(
+        self,
+        doom_env_id="VizdoomPredictPosition-MultiBinary-v1",
+        action_space=None,
+    ):
         self.doom_env_id = doom_env_id
-        self.action_space = action_space
-        self.environment_class = environment_class
-
-    def load_ml_dependencies(self):
-        torch = importlib.import_module("torch")
-        sb3 = importlib.import_module("stable_baselines3")
-        torch_layers = importlib.import_module("stable_baselines3.common.torch_layers")
-        vec_env = importlib.import_module("stable_baselines3.common.vec_env")
-
-        return (
-            torch,
-            torch.nn,
-            sb3.PPO,
-            torch_layers.BaseFeaturesExtractor,
-            vec_env.SubprocVecEnv,
-            vec_env.VecMonitor,
-        )
-
+        self.action_space = action_space or PREDICT_POSITION_DISCRETE_ACTIONS
 
     def make_doom_cnn_class(self, BaseFeaturesExtractor, nn, torch):
         class DoomCNN(BaseFeaturesExtractor):
@@ -71,9 +61,8 @@ class DoomMLPipeline:
 
         return DoomCNN
 
-
     def make_doom_env(self, render=False):
-        return self.environment_class(
+        return PositionDoomEnv(
             env_id=self.doom_env_id,
             render=render,
             discrete_actions=self.action_space,
@@ -83,29 +72,24 @@ class DoomMLPipeline:
             frame_stack=4,
         )
 
+    def make_vec_env(self):
+        vec_env = importlib.import_module("stable_baselines3.common.vec_env")
+        return vec_env.VecMonitor(vec_env.DummyVecEnv([lambda: self.make_doom_env()]))
 
-    def make_vec_env(self, num_envs=1):
-        _, _, _, _, SubprocVecEnv, VecMonitor = self.load_ml_dependencies()
+    def build_model(self, seed=None, tensorboard_log="./tensorboard_logs/"):
+        torch = importlib.import_module("torch")
+        nn = torch.nn
+        sb3 = importlib.import_module("stable_baselines3")
+        torch_layers = importlib.import_module("stable_baselines3.common.torch_layers")
 
-        # Create a list of environment initialization functions for multiprocessing
-        def make_env_fn():
-            def _init():
-                return self.make_doom_env()
-            return _init
-        
-        env_fns = [make_env_fn() for _ in range(num_envs)]
-        return VecMonitor(SubprocVecEnv(env_fns))
+        DoomCNN = self.make_doom_cnn_class(
+            torch_layers.BaseFeaturesExtractor,
+            nn,
+            torch,
+        )
+        env = self.make_vec_env()
 
-
-    def build_model(self, seed=None, tensorboard_log="./tensorboard_logs/", num_envs=1):
-        torch, nn, PPO, BaseFeaturesExtractor, _, _ = self.load_ml_dependencies()
-        DoomCNN = self.make_doom_cnn_class(BaseFeaturesExtractor, nn, torch)
-        env = self.make_vec_env(num_envs=num_envs)
-
-        # Scale batch size with number of environments: 1 env uses 64, 8 envs use 512
-        batch_size = 64 * num_envs
-
-        model = PPO(
+        model = sb3.DQN(
             "CnnPolicy",
             env,
             policy_kwargs={
@@ -113,12 +97,15 @@ class DoomMLPipeline:
                 "features_extractor_kwargs": {"features_dim": 256},
                 "normalize_images": False,
             },
-            learning_rate=3e-4,
-            n_steps=1024,
-            batch_size=batch_size,
+            learning_rate=1e-4,
+            buffer_size=5_000,
+            learning_starts=1_000,
+            batch_size=16,
             gamma=0.99,
-            gae_lambda=0.95,
-            clip_range=0.2,
+            target_update_interval=1_000,
+            exploration_fraction=0.1,
+            exploration_final_eps=0.05,
+            optimize_memory_usage=False,
             tensorboard_log=tensorboard_log,
             verbose=1,
             seed=seed,

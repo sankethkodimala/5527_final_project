@@ -2,6 +2,9 @@
 venv/
 
 logs/
+defend_center_logs/
+checkpoints/
+_vizdoom/
 
 __pycache__/
 *.pyc

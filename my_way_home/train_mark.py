@@ -11,10 +11,8 @@ from defend_center.actions import DEFEND_CENTER_DISCRETE_ACTIONS
 from defend_center.doom_env_defend_center import DefendCenterDoomEnv
 from my_way_home.actions import MY_WAY_HOME_DISCRETE_ACTIONS
 from my_way_home.doom_env_my_way_home import MyWayHomeDoomEnv
-from predict_position.actions import PREDICT_POSITION_DISCRETE_ACTIONS
-from predict_position.doom_env_position import PositionDoomEnv
 
-import pipeline
+import pipeline_mark as pipeline
 
 def train(
     total_timesteps=1_000_000,
@@ -22,7 +20,7 @@ def train(
     seed=5527,
     scenario_id="VizdoomBasic-v1",
     environment_class="DoomEnv",
-    num_envs=1,
+    resume_path=None,
 ):
     set_random_seed(seed)
 
@@ -42,10 +40,6 @@ def train(
         scenario_id = "VizdoomBasic-v1"
         discrete_actions = BASIC_DISCRETE_ACTIONS
         environment_class = DoomEnv
-    elif environment_class == "PositionDoomEnv":
-        scenario_id = "VizdoomPredictPosition-MultiBinary-v1"
-        discrete_actions = PREDICT_POSITION_DISCRETE_ACTIONS
-        environment_class = PositionDoomEnv
     else:
         raise ValueError(
             "Unknown environment_class. Use DoomEnv, CorridorDoomEnv, "
@@ -53,11 +47,17 @@ def train(
         )
 
     ml_pipeline = pipeline.DoomMLPipeline(scenario_id, discrete_actions, environment_class)    
-    run_name = f"recurrent_ppo_{scenario_id}"
+    run_name = f"recurrent_ppo_{scenario_id}_v2"
 
-    model, env = ml_pipeline.build_model(seed=seed, num_envs=num_envs)
+    model, env = ml_pipeline.build_model(seed=seed)
     eval_env = ml_pipeline.make_vec_env(num_envs=1)
 
+    if resume_path is not None:
+        if os.path.exists(resume_path):
+            print(f"Loading weights from checkpoint: {resume_path}")
+            model.set_parameters(resume_path)
+        else:
+            print(f"Warning: Checkpoint {resume_path} not found. Starting from scratch.")
 
     checkpoint_dir = os.path.join("checkpoints", scenario_id)
     best_dir = os.path.join(checkpoint_dir, "best")
@@ -92,7 +92,7 @@ def train(
         total_timesteps=total_timesteps,
         callback=callbacks,
         tb_log_name=run_name,
-        reset_num_timesteps=True,
+        reset_num_timesteps=(resume_path is None),
     )
 
     print("Training finished. Saving final model.")
@@ -113,9 +113,9 @@ if __name__ == "__main__":
                         help="ViZDoom scenario ID (default: VizdoomBasic-v1)")
     parser.add_argument("--environment-class", type=str, default="DoomEnv",
                         help="Environment class to use: DoomEnv, CorridorDoomEnv, DefendCenterDoomEnv, or MyWayHomeDoomEnv")
-    parser.add_argument("--num-envs", type=int, default=1,
-                        help="Number of parallel environments for training (default: 1, recommended: 8)")
+    parser.add_argument("--resume", type=str, default=None,
+                        help="Path to a checkpoint .zip file to resume training from")
 
     args = parser.parse_args()
 
-    train(args.timesteps, args.checkpoint_freq, args.seed, args.scenario_id, args.environment_class, args.num_envs)
+    train(args.timesteps, args.checkpoint_freq, args.seed, args.scenario_id, args.environment_class, args.resume)
