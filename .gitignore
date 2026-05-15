@@ -1,18 +1,35 @@
+# Environments
 .venv/
 venv/
+.env/
 
+# Logs
 logs/
+*_logs/
+my_logs/
+*.log
+*.out
+*.err
+*.pdf
 
+# Models, checkpoints, and TensorBoard
+checkpoints/
+tensorboard_logs/
+*.zip
+
+# ViZDoom local files
+_vizdoom/
+*/_vizdoom/
+*.ini
+preprocessed_preview.png
+
+# Python cache
 __pycache__/
+*/__pycache__/
 *.pyc
 *.pyo
 *.pyd
 
+# OS/editor files
 .DS_Store
-
-*.ini
-preprocessed_preview.png
-
-# Models and Logs
-*.zip
-tensorboard_logs/
+.vscode/

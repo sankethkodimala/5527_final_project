@@ -1,0 +1,100 @@
+import argparse
+import os
+
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
+from stable_baselines3.common.utils import set_random_seed
+
+from predict_position.actions import PREDICT_POSITION_DISCRETE_ACTIONS
+from predict_position.doom_env_position import PositionDoomEnv
+from predict_position.pipeline_dqn_predict_position import PredictPositionDQNPipeline
+
+SCENARIO_ID = "VizdoomPredictPosition-MultiBinary-v1"
+
+
+def train(
+    total_timesteps=2_000_000,
+    checkpoint_freq=100_000,
+    seed=5527,
+    resume_path=None,
+):
+    set_random_seed(seed)
+
+    ml_pipeline = PredictPositionDQNPipeline(
+        doom_env_id=SCENARIO_ID,
+        action_space=PREDICT_POSITION_DISCRETE_ACTIONS,
+    )
+    run_name = f"dqn_{SCENARIO_ID}"
+
+    model, env = ml_pipeline.build_model(seed=seed)
+
+    if resume_path is not None:
+        if os.path.exists(resume_path):
+            print(f"Loading weights from checkpoint: {resume_path}")
+            model.set_parameters(resume_path)
+        else:
+            print(f"Warning: checkpoint {resume_path} not found. Starting from scratch.")
+
+    checkpoint_dir = os.path.join("checkpoints", f"dqn_{SCENARIO_ID}")
+    best_dir = os.path.join(checkpoint_dir, "best")
+
+    os.makedirs(best_dir, exist_ok=True)
+    os.makedirs("tensorboard_logs", exist_ok=True)
+
+    # Create evaluation environment
+    eval_pipeline = PredictPositionDQNPipeline(
+        doom_env_id=SCENARIO_ID,
+        action_space=PREDICT_POSITION_DISCRETE_ACTIONS,
+    )
+    eval_env = eval_pipeline.make_vec_env()
+
+    callbacks = [
+        CheckpointCallback(
+            save_freq=checkpoint_freq,
+            save_path=checkpoint_dir,
+            name_prefix=run_name,
+            verbose=1,
+        ),
+        EvalCallback(
+            eval_env,
+            best_model_save_path=best_dir,
+            log_path=checkpoint_dir,
+            eval_freq=checkpoint_freq,
+            n_eval_episodes=10,
+            deterministic=True,
+            render=False,
+            verbose=1,
+        ),
+    ]
+
+    print(f"Starting training: {SCENARIO_ID} for {total_timesteps:,} timesteps")
+    print(f"Observation space: {env.observation_space}")
+    print(f"Action space:      {env.action_space}")
+
+    model.learn(
+        total_timesteps=total_timesteps,
+        callback=callbacks,
+        tb_log_name=run_name,
+        reset_num_timesteps=(resume_path is None),
+    )
+
+    print("Training finished. Saving final model.")
+    model.save(os.path.join(checkpoint_dir, f"{run_name}_final"))
+
+    env.close()
+    eval_env.close()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=f"Train DQN on {SCENARIO_ID}"
+    )
+    parser.add_argument("--timesteps", type=int, default=2_000_000,
+                        help="Total environment steps (default: 2M)")
+    parser.add_argument("--checkpoint-freq", type=int, default=100_000,
+                        help="Checkpoint interval in steps (default: 100k)")
+    parser.add_argument("--seed", type=int, default=5527)
+    parser.add_argument("--resume", type=str, default=None,
+                        help="Path to a checkpoint .zip to resume from")
+
+    args = parser.parse_args()
+    train(args.timesteps, args.checkpoint_freq, args.seed, args.resume)

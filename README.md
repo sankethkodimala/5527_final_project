@@ -1,103 +1,80 @@
+# CSCI 5527 Final Project - ViZDoom Reinforcement Learning
+
+This repository contains the code for a CSCI 5527 final project comparing reinforcement learning agents across ViZDoom tasks. The project focuses on PPO, Recurrent PPO with LSTM memory, and DQN training/evaluation pipelines.
+
+## Scenarios
+- Predict Position
+- Deadly Corridor
+- Defend the Center
+- Defend the Line
+- My Way Home
+
+## Algorithms
+- PPO
+- Recurrent PPO with LSTM
+- DQN
+
 ## Setup
+
+Create and activate an environment, then install the project dependencies:
+
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+conda create -n vizdoom-env python=3.10 -y
+conda activate vizdoom-env
 pip install -r requirements.txt
 ```
 
-## Action Space
+## Training Examples
 
-### Discrete
-This takes an input of (n) Which is a single integer [0..2] where:
+Defend the Line PPO:
 
-0 is move left
-1 is move right
-2 is shoot
-
-Files for this are located at
-`doom_env` and `test_doom_env.py`
-
-### MultiBinary
-This takes an input vector [x, y, z] where:
-[LEFT, RIGHT, SHOOT]
-Examples:
-```
-[0, 0, 0]  # do nothing
-[1, 0, 0]  # move left
-[0, 1, 0]  # move right
-[0, 0, 1]  # shoot
-[1, 0, 1]  # move left + shoot
-[0, 1, 1]  # move right + shoot
+```bash
+python train_ppo_defend_the_line.py --timesteps 1000000 --seed 5527
 ```
 
-Files for this are located at
-`multibinary-actions/doom_multibinary.py` and `multibinary-actions/test_doom_multibinary.py`
+Defend the Line Recurrent PPO with LSTM:
 
-### Box (don't use this)
-
-If we want to train hard, we can do this:
-Box(low, high, shape)
-
-Where it takes contiuous values, really hard to train
-
-
-## Training
-According to ChatGPT for training:
-I’d train in two phases:
-
-Get a baseline working with VizdoomBasic-v1 + PPO
-Only after that works, switch to a richer action space or harder scenario
-
-That’s the best path because ViZDoom recommends the maintained Gymnasium wrappers, the default BASIC env exists as a standard Gymnasium env, and Stable-Baselines3’s PPO supports Discrete, MultiDiscrete, and MultiBinary action spaces.
-
-Examples:
-
-Training Logic
-```
-import gymnasium as gym
-from vizdoom import gymnasium_wrapper
-from stable_baselines3 import PPO
-
-env = gym.make("VizdoomBasic-v1")
-
-model = PPO("MultiInputPolicy", env, verbose=1)
-model.learn(total_timesteps=100_000)
-model.save("ppo_vizdoom_basic")
-env.close()
+```bash
+python train_lstm_defend_the_line.py --timesteps 1000000 --checkpoint-freq 100000 --seed 5527
 ```
 
-HyperParams
-```
-model = PPO(
-    "MultiInputPolicy",
-    env,
-    verbose=1,
-    learning_rate=3e-4,
-    n_steps=1024,
-    batch_size=64,
-    gamma=0.99,
-    gae_lambda=0.95,
-    clip_range=0.2,
-)
+Defend the Line DQN:
+
+```bash
+python train_dqn_defend_the_line.py --timesteps 1000000 --seed 5527
 ```
 
-## CNN + PPO Pipeline
+Several MSI/SLURM scripts are included for longer cluster runs, including:
 
-The reusable CNN/PPO wiring now lives in [cnn.py](cnn.py). It builds the wrapped
-ViZDoom environment, a custom CNN feature extractor, and a PPO model without
-starting training.
-
-Example:
-
-```python
-from cnn import build_pipeline
-
-model, env = build_pipeline()
-print(env.observation_space)
-print(model.policy)
+```bash
+sbatch train_ppo_defend_the_line.sh
+sbatch train_lstm_defend_the_line.sh
+sbatch train_dqn_defend_the_line.sh
 ```
 
-If you want to train later, call `model.learn(...)` in your own script.
+Additional scenario-specific training scripts live in the scenario folders and top-level shell scripts.
 
-## Training
-To run training, do this:
+## Evaluation
+
+Evaluation scripts are included with each scenario where applicable. For Defend the Line:
+
+```bash
+python defend_the_line/evaluate_ppo_defend_the_line.py
+python defend_the_line/evaluate_lstm_defend_the_line.py
+python defend_the_line/evaluate_dqn_defend_the_line.py
+```
+
+These scripts expect locally generated model checkpoints. Checkpoints are not committed to this repository.
+
+## Generated Outputs
+
+Training generates checkpoints, model zip files, TensorBoard output, SLURM logs, local ViZDoom files, and Python caches. These files are intentionally ignored by Git so the repository remains code-only and reproducible from source.
+
+Ignored generated outputs include:
+
+- `checkpoints/`
+- `tensorboard_logs/`
+- `logs/`, `*_logs/`, and `my_logs/`
+- `*.zip`, `*.out`, `*.err`, `*.log`, and `*.pdf`
+- `__pycache__/`, `_vizdoom/`, and `*.ini`
+- local virtual environments such as `.venv/` and `venv/`

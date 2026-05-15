@@ -7,48 +7,75 @@ from basic.actions import BASIC_DISCRETE_ACTIONS
 from basic.doom_env import DoomEnv
 from corridor.actions import CORRIDOR_DISCRETE_ACTIONS
 from corridor.doom_env_corridor import CorridorDoomEnv
+from defend_center.actions import DEFEND_CENTER_DISCRETE_ACTIONS
+from defend_center.doom_env_defend_center import DefendCenterDoomEnv
+from my_way_home.actions import MY_WAY_HOME_DISCRETE_ACTIONS
+from my_way_home.doom_env_my_way_home import MyWayHomeDoomEnv
+from predict_position.actions import PREDICT_POSITION_DISCRETE_ACTIONS
+from predict_position.doom_env_position import PositionDoomEnv
 
 import pipeline
 
-def train(total_timesteps=1_000_000, checkpoint_freq=100_000, seed=5527, scenario_id="VizdoomBasic-v1", environment_class="DoomEnv"):
+def train(
+    total_timesteps=1_000_000,
+    checkpoint_freq=100_000,
+    seed=5527,
+    scenario_id="VizdoomBasic-v1",
+    environment_class="DoomEnv",
+    num_envs=1,
+):
     set_random_seed(seed)
 
     if environment_class == "CorridorDoomEnv":
         scenario_id = "VizdoomDeadlyCorridor-v1"
         discrete_actions = CORRIDOR_DISCRETE_ACTIONS
         environment_class = CorridorDoomEnv
-
-    if environment_class == "DoomEnv":
+    elif environment_class == "DefendCenterDoomEnv":
+        scenario_id = "VizdoomDefendCenter-v1"
+        discrete_actions = DEFEND_CENTER_DISCRETE_ACTIONS
+        environment_class = DefendCenterDoomEnv
+    elif environment_class == "MyWayHomeDoomEnv":
+        scenario_id = "VizdoomMyWayHome-v1"
+        discrete_actions = MY_WAY_HOME_DISCRETE_ACTIONS
+        environment_class = MyWayHomeDoomEnv
+    elif environment_class == "DoomEnv":
         scenario_id = "VizdoomBasic-v1"
         discrete_actions = BASIC_DISCRETE_ACTIONS
         environment_class = DoomEnv
+    elif environment_class == "PositionDoomEnv":
+        scenario_id = "VizdoomPredictPosition-MultiBinary-v1"
+        discrete_actions = PREDICT_POSITION_DISCRETE_ACTIONS
+        environment_class = PositionDoomEnv
+    else:
+        raise ValueError(
+            "Unknown environment_class. Use DoomEnv, CorridorDoomEnv, "
+            "DefendCenterDoomEnv, or MyWayHomeDoomEnv."
+        )
 
     ml_pipeline = pipeline.DoomMLPipeline(scenario_id, discrete_actions, environment_class)    
-    
+    run_name = f"recurrent_ppo_{scenario_id}"
+
+    model, env = ml_pipeline.build_model(seed=seed, num_envs=num_envs)
+    eval_env = ml_pipeline.make_vec_env(num_envs=1)
 
 
+    checkpoint_dir = os.path.join("checkpoints", scenario_id)
+    best_dir = os.path.join(checkpoint_dir, "best")
 
-    torch_pkg, nn, PPO_cls, BaseFeaturesExtractor, _, _ = ml_pipeline.load_ml_dependencies()
-    DoomCNN = ml_pipeline.make_doom_cnn_class(BaseFeaturesExtractor, nn, torch_pkg)
-
-    model, env = ml_pipeline.build_model()
-    eval_env = ml_pipeline.make_vec_env()
-
-
-    os.makedirs("checkpoints/best", exist_ok=True)
+    os.makedirs(best_dir, exist_ok=True)
     os.makedirs("tensorboard_logs", exist_ok=True)
 
     callbacks = [
         CheckpointCallback(
             save_freq=checkpoint_freq,
-            save_path="./checkpoints/",
-            name_prefix=f"ppo_vizdoom_{scenario_id}",
+            save_path=checkpoint_dir,
+            name_prefix=run_name,
             verbose=1,
         ),
         EvalCallback(
             eval_env,
-            best_model_save_path="./checkpoints/best/",
-            log_path="./checkpoints/",
+            best_model_save_path=best_dir,
+            log_path=checkpoint_dir,
             eval_freq=checkpoint_freq,
             n_eval_episodes=5,
             deterministic=True,
@@ -64,12 +91,12 @@ def train(total_timesteps=1_000_000, checkpoint_freq=100_000, seed=5527, scenari
     model.learn(
         total_timesteps=total_timesteps,
         callback=callbacks,
-        tb_log_name="ppo_vizdoom",
+        tb_log_name=run_name,
         reset_num_timesteps=True,
     )
 
     print("Training finished. Saving final model.")
-    model.save("ppo_vizdoom_baseline")
+    model.save(os.path.join(checkpoint_dir, f"{run_name}_final"))
 
     env.close()
     eval_env.close()
@@ -85,8 +112,10 @@ if __name__ == "__main__":
     parser.add_argument("--scenario-id", type=str, default="VizdoomBasic-v1",
                         help="ViZDoom scenario ID (default: VizdoomBasic-v1)")
     parser.add_argument("--environment-class", type=str, default="DoomEnv",
-                        help="Environment class to use (default: DoomEnv)")
+                        help="Environment class to use: DoomEnv, CorridorDoomEnv, DefendCenterDoomEnv, or MyWayHomeDoomEnv")
+    parser.add_argument("--num-envs", type=int, default=1,
+                        help="Number of parallel environments for training (default: 1, recommended: 8)")
 
     args = parser.parse_args()
 
-    train(args.timesteps, args.checkpoint_freq, args.seed, args.scenario_id, args.environment_class)
+    train(args.timesteps, args.checkpoint_freq, args.seed, args.scenario_id, args.environment_class, args.num_envs)

@@ -16,16 +16,16 @@ class DoomMLPipeline:
 
     def load_ml_dependencies(self):
         torch = importlib.import_module("torch")
-        sb3 = importlib.import_module("sb3_contrib")
+        sb3 = importlib.import_module("stable_baselines3")
         torch_layers = importlib.import_module("stable_baselines3.common.torch_layers")
         vec_env = importlib.import_module("stable_baselines3.common.vec_env")
 
         return (
             torch,
             torch.nn,
-            sb3.RecurrentPPO,
+            sb3.PPO,
             torch_layers.BaseFeaturesExtractor,
-            vec_env.DummyVecEnv,
+            vec_env.SubprocVecEnv,
             vec_env.VecMonitor,
         )
 
@@ -84,36 +84,44 @@ class DoomMLPipeline:
         )
 
 
-    def make_vec_env(self):
-        _, _, _, _, DummyVecEnv, VecMonitor = self.load_ml_dependencies()
+    def make_vec_env(self, num_envs=1):
+        _, _, _, _, SubprocVecEnv, VecMonitor = self.load_ml_dependencies()
 
-        return VecMonitor(DummyVecEnv([lambda: self.make_doom_env()]))
+        # Create a list of environment initialization functions for multiprocessing
+        def make_env_fn():
+            def _init():
+                return self.make_doom_env()
+            return _init
+        
+        env_fns = [make_env_fn() for _ in range(num_envs)]
+        return VecMonitor(SubprocVecEnv(env_fns))
 
 
-    def build_model(self):
-        torch, nn, RecurrentPPO, BaseFeaturesExtractor, _, _ = self.load_ml_dependencies()
+    def build_model(self, seed=None, tensorboard_log="./tensorboard_logs/", num_envs=1):
+        torch, nn, PPO, BaseFeaturesExtractor, _, _ = self.load_ml_dependencies()
         DoomCNN = self.make_doom_cnn_class(BaseFeaturesExtractor, nn, torch)
-        env = self.make_vec_env()
+        env = self.make_vec_env(num_envs=num_envs)
 
-        model = RecurrentPPO(
-            "CnnLstmPolicy",
+        # Scale batch size with number of environments: 1 env uses 64, 8 envs use 512
+        batch_size = 64 * num_envs
+
+        model = PPO(
+            "CnnPolicy",
             env,
             policy_kwargs={
                 "features_extractor_class": DoomCNN,
                 "features_extractor_kwargs": {"features_dim": 256},
                 "normalize_images": False,
-                "lstm_hidden_size": 256,
-                "n_lstm_layers": 1,
-                "shared_lstm": False,
-                "enable_critic_lstm": True,
             },
             learning_rate=3e-4,
             n_steps=1024,
-            batch_size=64,
+            batch_size=batch_size,
             gamma=0.99,
             gae_lambda=0.95,
             clip_range=0.2,
+            tensorboard_log=tensorboard_log,
             verbose=1,
+            seed=seed,
         )
 
         return model, env
