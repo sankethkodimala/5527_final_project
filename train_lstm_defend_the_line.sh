@@ -28,7 +28,7 @@ echo "Node:     $SLURMD_NODENAME"
 echo "GPU:      $(nvidia-smi --query-gpu=name --format=csv,noheader)"
 echo "Start:    $(date)"
 
-RESUME="--resume checkpoints/recurrent_ppo_VizdoomDefendLine-v1/best/best_model.zip"
+# RESUME="--resume checkpoints/recurrent_ppo_VizdoomDefendLine-v1/best/best_model.zip"
 
 $PYTHON train_lstm_defend_the_line.py \
     --timesteps 10000000 \
